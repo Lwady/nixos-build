@@ -166,5 +166,5 @@ in
   };
 
   # Specify the state version for home-manager
-  home.stateVersion = "22.05";
+  home.stateVersion = "23.05";
 }

@@ -77,7 +77,7 @@
    gaps inner 5
 
    # Wallpaper
-   output * bg $HOME/Pictures/wallpaper.png fill
+   output * bg $HOME/Pictures/wallpaper/cats.jpg fill
 
 
 ### Custom misc settings ###

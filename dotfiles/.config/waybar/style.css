@@ -37,8 +37,8 @@
 
 /* Styling the entire bar */
 #waybar {
-    background: #2D303B;
-    color: #C4CBD4;
+    background: #EADFBE;
+    color: #FB5C72;
     font-family: Cantarell, Noto Sans, sans-serif, "Font Awesome 5 Free";
     font-size: 13px;
 }

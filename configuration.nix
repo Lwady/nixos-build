@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{config, pkgs, ... }:
 
 let
   # Import user-specific configuration
@@ -20,11 +20,21 @@ in
     isNormalUser = true;
     home = userConfig.homeDirectory;
     shell = pkgs.zsh; # Setting Zsh as the default shell
-    extraGroups = [ "wheel" "networkmanager" "video" ]; # Adding the user to the wheel group for sudo privileges
+    extraGroups = [ "wheel" "networkmanager" "video" "docker" ]; # Adding the user to the wheel group for sudo privileges
   };
 
   # Enable ZSH for the system
   programs.zsh.enable = true;
+
+  programs.thunar.enable = true;
+
+  programs.thunar.plugins = with pkgs.xfce; [
+    thunar-archive-plugin
+    thunar-volman
+  ];
+
+  services.gvfs.enable = true; # Mount, trash, and other functionalities
+  services.tumbler.enable = true; # Thumbnail support for images
 
   # Enable sound support
   sound.enable = true;
@@ -35,7 +45,7 @@ in
   # Bluetooth configurations
   hardware.bluetooth = {
     enable = true;
-    package = pkgs.bluezFull; # Use the full Bluez package for Bluetooth support
+    package = pkgs.bluez; # Use the full Bluez package for Bluetooth support
     powerOnBoot = true; # Power on Bluetooth devices at boot
   };
 
@@ -59,10 +69,13 @@ in
     firefox-wayland
     wget
     docker
+    direnv
+    nix-direnv
     wob
     libfido2
     gh
     swappy
+    slack
     swaylock-effects
     nodejs
     python3
@@ -70,12 +83,14 @@ in
     shellcheck
     wdisplays
     git
+    google-chrome
     waybar
     blueman
     github-cli
     brightnessctl
     rofi
     dunst
+    hyprpicker
     xfce.thunar
     libnotify
     home-manager
@@ -84,6 +99,7 @@ in
     grim
     bluez
     dconf
+    yarn
     tidal-hifi
     vscode
     gnome.gnome-boxes
