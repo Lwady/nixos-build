@@ -1,4 +1,0 @@
-[Desktop Entry]
-Name=Logout
-Exec=swaymsg exit
-Type=Application

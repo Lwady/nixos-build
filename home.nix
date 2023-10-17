@@ -7,162 +7,109 @@ let
   # Import generated file definitions
   generatedFiles = import ./generated-files.nix;
 
-  # Define a Python environment with the specified packages
-  myPythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    pynvim
-    flake8
-    pylint
-    black
-    requests
-  ]);
+  p10kTheme = ./.config/.p10k.zsh;
 
-  # Install Tflint
-  tflintZip = pkgs.fetchurl {
-    url = "https://github.com/terraform-linters/tflint/releases/download/v0.47.0/tflint_linux_amd64.zip";
-    sha256 = "sha256-CGYSO6M7HXPatyDKc6aXbl+18cWVvfGKaE1QYOygmpY="; # You need to provide the sha256 for the downloaded zip file
-  };
+in {
 
-  tflint = pkgs.stdenv.mkDerivation {
-    name = "tflint";
-    src = tflintZip;
-
-    nativeBuildInputs = [ pkgs.unzip ];
-
-    unpackPhase = "unzip $src";
-
-    installPhase = ''
-      mkdir -p $out/bin
-      cp tflint $out/bin/
-      chmod 755 $out/bin/tflint
-    '';
-  };
-
-  # Install Hadolint
-  hadolint = pkgs.stdenv.mkDerivation rec {
-    pname = "hadolint";
-    version = "2.12.0";
-
-    src = pkgs.fetchurl {
-      url = "https://github.com/hadolint/hadolint/releases/download/v${version}/hadolint-Linux-x86_64";
-      sha256 = "sha256-1Qz2Xc4Wk2goihteg9fRNHCn99WcIl2aFwgN44MV714="; # You need to provide the correct sha256 value here
-      executable = true;
-    };
-
-    dontUnpack = true;
-
-    installPhase = ''
-      install -D $src $out/bin/hadolint
-    '';
-  };
-
-  # Enable powerlevel10k
-  powerlevel10kSrc = builtins.fetchGit {
-    url = "https://github.com/romkatv/powerlevel10k.git";
-    rev = "017395a266aa15011c09e64e44a1c98ed91c478c";
-  };
-
-  # Install copilot.vim
-  copilotSrc = builtins.fetchGit {
-    url = "https://github.com/github/copilot.vim";
-    rev = "1358e8e45ecedc53daf971924a0541ddf6224faf";
-  };
-
-  # MesloLGS NF font files
-  mesloLGSFonts = {
-    Regular = builtins.fetchurl {
-      url = "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf";
-      name = "MesloLGS-NF-Regular.ttf";
-      sha256 = "0zg5qvrdi6y2y7dwbwi4d442s78ayjmq72cy2g0dgy4pdqc4cyfr";
-    };
-    Bold = builtins.fetchurl {
-      url = "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf";
-      name = "MesloLGS-NF-Bold.ttf";
-      sha256 = "00v048clvjrg2l49kf0qnfpf0vayj9c0c0pa8f1kqj67yyf1kh5n";
-    };
-    Italic = builtins.fetchurl {
-      url = "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf";
-      name = "MesloLGS-NF-Italic.ttf";
-      sha256 = "1vwjsgf1d8g76sna88lwm1j878xw51cn45d9azhh8xsrwb5pndbg";
-    };
-    BoldItalic = builtins.fetchurl {
-      url = "https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf";
-      name = "MesloLGS-NF-Bold-Italic.ttf";
-      sha256 = "080jipmy5jpik27wcvripinmhv9jvlcbivr4ng255h6fvqd17d2n";
+  nixpkgs = {
+    config = {
+      allowUnfree = true;
+      allowUnfreePredicate = (_: true);
     };
   };
 
-  # Install vim-plug
-  vimPlug = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/junegunn/vim-plug/0.11.0/plug.vim";
-    sha256 = "0lm582jb9y571jpny8pkp72i8ms6ncrij99v0r8zc7qmqcic8k8d";
-  };
-
-in
-{
   # Enable fontconfig for font management
   fonts.fontconfig.enable = true;
 
   # Specify packages to be installed for the user
   home.packages = with pkgs; [
     fontconfig
-    font-awesome_5
-    cantarell-fonts
-    noto-fonts
     myPythonEnv
     tflint
     hadolint
+
+    #fonts
+    cantarell-fonts
+    fira-mono
+    font-awesome
+    material-design-icons
+    noto-fonts
+    noto-fonts-cjk
+    noto-fonts-emoji
+    terminus-nerdfont
+    (nerdfonts.override {
+      fonts =
+        [ "FiraCode" "FiraMono" "Hack" "DroidSansMono" "Meslo" "RobotoMono" ];
+    })
   ];
 
   # ZSH shell configuration
   programs.zsh = {
+    initExtra = ''
+      [[ ! -f ${p10kTheme} ]] || source ${p10kTheme}
+    '';
     enable = true; # Enable ZSH as the shell
+    enableAutosuggestions = true;
 
     # Set aliases for ZSH shell
     shellAliases = {
-      vim = "nvim"; # Use 'nvim' when 'vim' is called
+      # General aliases
+      ll = "ls -l";
+      la = "ls -a";
+
+      # Git aliases
+      g = "git";
+      ga = "git add";
+      gc = "git commit";
+      gd = "git diff";
+      gp = "git push";
+      gs = "git status";
+
+      # Flake build alias
+      build =
+        "sudo nixos-rebuild switch --flake ~/Git/nixos-build/#laurawady && home-manager switch --flake ~/Git/nixos-build/#laurawady@nixos";
+      update = "sudo nix flake update && build";
+      clean =
+        "sudo nix-env --delete-generations old -p /nix/var/nix/profiles/system && sudo nix-collect-garbage -d && build";
     };
   };
 
   # Set user-specific details from the imported configuration
-  home.username = userConfig.username;
-  home.homeDirectory = userConfig.homeDirectory;
+  home = {
+    username = userConfig.username;
+    homeDirectory = userConfig.homeDirectory;
+    stateVersion = "23.05";
 
-  # Dconf modifications
-  dconf.settings = {
-    "org/blueman/general/auto-power-on" = { value = true; };
-  };
+    # Set session variables
+    sessionVariables = {
+      PATH = with pkgs; "${myPythonEnv}/bin:$PATH";
+      MOZ_ENABLE_WAYLAND = 1;
+      XDG_CURRENT_DESKTOP = "sway";
+    };
 
-  # Set session variables
-  home.sessionVariables = {
-    PATH = with pkgs; "${myPythonEnv}/bin:$PATH";
-    MOZ_ENABLE_WAYLAND = 1;
-    XDG_CURRENT_DESKTOP = "sway";
-  };
+    # Include home file definitions
+    file = {
+      ".config/rofi/config.rasi".source = ./dotfiles/.config/rofi/config.rasi;
+      ".config/rofi/Arc-Dark.rasi".source =
+        ./dotfiles/.config/rofi/Arc-Dark.rasi;
 
-  # Include home file definitions
-  home.file = {
-    ".config/rofi/config.rasi".source = ./dotfiles/.config/rofi/config.rasi;
-    ".config/rofi/Arc-Dark.rasi".source = ./dotfiles/.config/rofi/Arc-Dark.rasi;
-    ".config/nvim/init.vim".source = ./dotfiles/.config/nvim/init.vim;
-    ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-    ".config/waybar/config".source = ./dotfiles/.config/waybar/config;
-    ".config/sway/config".source = ./dotfiles/.config/sway/config;
-    ".config/alacritty/alacritty.yml".source = ./dotfiles/.config/alacritty/alacritty.yml;
-    ".config/swappy/config".source = ./dotfiles/.config/swappy/config;
-    ".zshrc".source = ./dotfiles/.zshrc;
-    ".p10k.zsh".source = ./dotfiles/.p10k.zsh;
-    ".local/bin/sway_split_direction.sh".source = ./dotfiles/.local/bin/sway_split_direction.sh;
-    ".local/bin/set-dark-theme.sh".source = ./dotfiles/.local/bin/set-dark-theme.sh;
-    ".local/share/applications/shutdown.desktop".source = ./dotfiles/.local/share/applications/shutdown.desktop;
-    ".local/share/applications/reboot.desktop".source = ./dotfiles/.local/share/applications/reboot.desktop;
-    ".local/share/applications/logout.desktop".source = ./dotfiles/.local/share/applications/logout.desktop;
-    ".local/share/nvim/site/autoload/plug.vim".source = vimPlug;
-    "/powerlevel10k".source = powerlevel10kSrc;
-    ".config/nvim/pack/github/start/copilot.vim".source = copilotSrc;
-    ".local/share/fonts/MesloLGS-NF/MesloLGS NF Regular.ttf".source = mesloLGSFonts.Regular;
-    ".local/share/fonts/MesloLGS-NF/MesloLGS NF Bold.ttf".source = mesloLGSFonts.Bold;
-    ".local/share/fonts/MesloLGS-NF/MesloLGS NF Italic.ttf".source = mesloLGSFonts.Italic;
-    ".local/share/fonts/MesloLGS-NF/MesloLGS NF Bold Italic.ttf".source = mesloLGSFonts.BoldItalic;
+      ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+      ".config/waybar/config".source = ./dotfiles/.config/waybar/config;
+
+      ".config/sway/config".source = ./dotfiles/.config/sway/config;
+
+      ".config/alacritty/alacritty.yml".source =
+        ./dotfiles/.config/alacritty/alacritty.yml;
+
+      ".config/swappy/config".source = ./dotfiles/.config/swappy/config;
+
+      ".local/share/applications/shutdown.desktop".source =
+        ./dotfiles/.local/share/applications/shutdown.desktop;
+      ".local/share/applications/reboot.desktop".source =
+        ./dotfiles/.local/share/applications/reboot.desktop;
+      ".local/share/applications/logout.desktop".source =
+        ./dotfiles/.local/share/applications/logout.desktop;
+    };
   };
 
   # Specify the state version for home-manager

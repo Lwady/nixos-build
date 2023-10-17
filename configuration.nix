@@ -1,59 +1,66 @@
-{config, pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
   # Import user-specific configuration
   userConfig = import ./user-config.nix;
 
-in
-{
+in {
   # Include hardware-specific configurations
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
   # Boot settings related to systemd-boot and EFI
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot = {
+    loader.systemd-boot.enable = true;
+    loader.efi.canTouchEfiVariables = true;
+    # Specify the Linux kernel package version
+    kernelPackages = pkgs.linuxPackages_6_4;
+  };
+
+  # OpenGL configuration settings
+  hardware.opengl = {
+    enable = true; # Enable OpenGL support
+    driSupport = true; # Enable Direct Rendering Infrastructure support
+  };
 
   # User configurations based on imported user-specific settings
   users.users.${userConfig.username} = {
     isNormalUser = true;
     home = userConfig.homeDirectory;
     shell = pkgs.zsh; # Setting Zsh as the default shell
-    extraGroups = [ "wheel" "networkmanager" "video" "docker" ]; # Adding the user to the wheel group for sudo privileges
+    extraGroups = [ "wheel" "networkmanager" "video" "docker" ];
   };
 
-  # Enable ZSH for the system
-  programs.zsh.enable = true;
-
-  programs.thunar.enable = true;
-
-  programs.thunar.plugins = with pkgs.xfce; [
-    thunar-archive-plugin
-    thunar-volman
-  ];
-
-  services.gvfs.enable = true; # Mount, trash, and other functionalities
-  services.tumbler.enable = true; # Thumbnail support for images
+  # Programs Enable
+  programs = {
+    zsh.enable = true;
+    thunar.enable = true;
+    thunar.plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
+  };
 
   # Enable sound support
   sound.enable = true;
 
-  # Enable PulseAudio for sound management
-  hardware.pulseaudio.enable = true;
-
-  # Bluetooth configurations
-  hardware.bluetooth = {
-    enable = true;
-    package = pkgs.bluez; # Use the full Bluez package for Bluetooth support
-    powerOnBoot = true; # Power on Bluetooth devices at boot
+  # Hardware configuration for Sound/BT
+  hardware = {
+    pulseaudio.enable = true;
+    bluetooth = {
+      enable = true;
+      package = pkgs.bluez;
+      powerOnBoot = true; # Power on Bluetooth devices at boot
+    };
   };
 
-  # Blueman service for managing Bluetooth devices from the GUI
-  services.blueman.enable = true;
+  # Enable services
+  services = {
+    blueman.enable = true;
+    gvfs.enable = true; # Mount, trash, and other functionalities
+    tumbler.enable = true; # Thumbnail support for images
+    # Enable PipeWire
+    pipewire.enable = true;
+  };
 
-  # Specify the Linux kernel package version
-  boot.kernelPackages = pkgs.linuxPackages_6_4;
+  # Enable NetworkManager for network management
+  networking.networkmanager.enable = true;
 
   # Enable non-free packages
   nixpkgs.config.allowUnfree = true;
@@ -64,99 +71,60 @@ in
   # List of packages to be globally installed on the system
   environment.systemPackages = with pkgs; [
     alacritty
-    neovim
-    sway
-    firefox-wayland
-    wget
-    docker
+    alsa-utils
+    brightnessctl
+    dconf
     direnv
-    nix-direnv
-    wob
-    libfido2
+    docker
+    dunst
+    firefox-wayland
     gh
-    swappy
-    slack
-    swaylock-effects
+    git
+    github-cli
+    gnome.gnome-boxes
+    grim
+    home-manager
+    hyprpicker
+    libfido2
+    libnotify
+    mako
+    neofetch
+    neovim
+    nix-direnv
+    nixpkgs-fmt
     nodejs
+    pavucontrol
     python3
     python3Packages.pip
-    shellcheck
-    wdisplays
-    git
-    google-chrome
-    waybar
-    blueman
-    github-cli
-    brightnessctl
     rofi
-    dunst
-    hyprpicker
-    xfce.thunar
-    libnotify
-    home-manager
-    pavucontrol
-    alsa-utils
-    grim
-    bluez
-    dconf
-    yarn
-    tidal-hifi
-    vscode
-    gnome.gnome-boxes
     shfmt
-    mako
+    shellcheck
+    slack
     slurp
-    wl-clipboard
-    unzip
     statix
-    nixpkgs-fmt
-    neofetch
+    sway
+    swaylock-effects
+    swappy
+    tidal-hifi
+    unzip
+    vscode
+    wdisplays
+    wget
+    wl-clipboard
+    wob
+    xfce.thunar
+    yarn
+    zsh
   ];
 
   # Enable Docker
   virtualisation.docker.enable = true;
 
-  # Create a systemd service for the Mako notification daemon
-  systemd.user.services.mako = {
-    enable = true;
-    description = "Mako notification daemon";
-
-    unitConfig = {
-      Type = "simple";
-      After = [ "graphical-session-pre.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-
-    serviceConfig = {
-      ExecStart = "${pkgs.mako}/bin/mako";
-      Restart = "always";
-      Environment = [
-        "WAYLAND_DISPLAY=wayland-1"
-      ];
-    };
-
-    wantedBy = [ "graphical-session.target" ];
-  };
-
   # Enable PAM for Swaylock
-  security.pam.services.swaylock = {
-    allowNullPassword = true;
-  };
-
-  # OpenGL configuration settings
-  hardware.opengl = {
-    enable = true; # Enable OpenGL support
-    driSupport = true; # Enable Direct Rendering Infrastructure support
-  };
+  security.pam.services.swaylock = { allowNullPassword = true; };
 
   # System version specification
   system.stateVersion = "23.05";
-
-  # Enable NetworkManager for network management
-  networking.networkmanager.enable = true;
-
-  # Enable PipeWire
-  services.pipewire.enable = true;
 
   # Enable xdg desktop integration
   xdg = {
