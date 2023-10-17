@@ -13,7 +13,6 @@ in {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
     # Specify the Linux kernel package version
-    kernelPackages = pkgs.linuxPackages_6_4;
   };
 
   # OpenGL configuration settings
@@ -82,19 +81,9 @@ in {
     git
     github-cli
     gnome.gnome-boxes
+    google-chrome
     grim
     home-manager
-    hyprpicker
-    libfido2
-    libnotify
-    mako
-    neofetch
-    neovim
-    nix-direnv
-    nixpkgs-fmt
-    nodejs
-    pavucontrol
-    python3
     python3Packages.pip
     rofi
     shfmt
@@ -108,6 +97,7 @@ in {
     tidal-hifi
     unzip
     vscode
+    waybar
     wdisplays
     wget
     wl-clipboard
@@ -125,6 +115,13 @@ in {
 
   # System version specification
   system.stateVersion = "23.05";
+
+  nix = {
+    package = pkgs.nixFlakes;
+    extraOptions = "experimental-features = nix-command flakes";
+    settings.keep-outputs = true;
+    settings.keep-derivations = true;
+  };
 
   # Enable xdg desktop integration
   xdg = {
