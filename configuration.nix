@@ -109,7 +109,6 @@ in {
 
   # Enable Docker
   virtualisation.docker.enable = true;
-
   # Enable PAM for Swaylock
   security.pam.services.swaylock = { allowNullPassword = true; };
 

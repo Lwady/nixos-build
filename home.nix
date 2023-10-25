@@ -66,7 +66,7 @@ in {
 
       # Flake build alias
       build =
-        "sudo nixos-rebuild switch --flake $(pwd)#mySystem && home-manager switch --flake $(pwd)#myUser";
+        "sudo nixos-rebuild switch --flake ~/Git/nixos-build-2/#mySystem && home-manager switch --flake ~/Git/nixos-build/#myUser";
       update = "sudo nix flake update && build";
       clean =
         "sudo nix-env --delete-generations old -p /nix/var/nix/profiles/system && sudo nix-collect-garbage -d && build";
